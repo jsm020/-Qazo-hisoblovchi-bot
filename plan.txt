@@ -1,0 +1,63 @@
+Quyida "Qazo Hisoblovchi Bot" uchun hujjat asosida tuzilgan, ishlab chiquvchilar yoki manfaatdor tomonlar uchun aniq va qisqa shaklda o‘zbek tilida yozilgan promt keltirilgan:
+
+Promt: Qazo Hisoblovchi Botni Ishlab Chiqish
+
+Loyiha Haqida
+
+"Qazo Hisoblovchi Bot" nomli Telegram botini Python (Aiogram framework) va SQLite3 ma'lumotlar bazasi yordamida ishlab chiqish kerak. Bot foydalanuvchilarga qazo namozlarini hisoblash va kuzatishda yordam beradi, shuningdek, kunlik bildirishnomalar va namoz vaqtlari haqida ma'lumot taqdim etadi. Loyiha 15-iyunga qadar, 5 kun ichida yakunlanishi shart.
+
+Bot Maqsadi
+
+Bot foydalanuvchilarga qazo namozlarini hisoblash va kuzatishda yordam beradi. Foydalanuvchilar o‘tkazib yuborilgan namozlarni kiritadi, kunlik namozlarni o‘qigan yoki o‘qimaganligi haqida bildirishnomalar oladi va qazo hisobini yangilaydi. Qo‘shimcha ravishda, namoz vaqtlari, tez-tez so‘raladigan savollar (FAQ) va admin paneli kabi funksiyalar mavjud.
+
+Funksional Talablar
+
+Foydalanuvchi Kirishi va Interfeysi
+Yangi Foydalanuvchilar: Qazo namozlari va bot haqida qisqacha matn yuboriladi va qazo hisoblash so‘raladi.
+Avvalgi Foydalanuvchilar: Asosiy menyuga o‘tiladi.
+Qazo Kuzatish ("Qazolarim" Tugmasi)
+Har bir namoz turi (masalan, Bomdod, Peshin, Asr, Shom, Xufton, Vitr) uchun qazo soni ko‘rsatiladi.
+Foydalanuvchilar "+" va "−" tugmalari orqali qazo sonini o‘zgartirishi mumkin (2-rasmda ko‘rsatilganidek).
+Foydalanuvchilar kunlik namozlarni o‘tkazib yuborganlarini belgilaydi (masalan, "Bomdod va Asr o‘qilmadi" tugmasini bosadi), bu qazo hisobiga qo‘shiladi.
+Kunlik bildirishnomalar foydalanuvchilarga qaysi namozlarni o‘qigan yoki o‘qimaganligini yangilashni eslatadi.
+Qazo Hisoblash ("Qazo Hisoblash" Tugmasi)
+Qazo namozlari haqida video va matn taqdim etiladi.
+"Hisoblashni Boshlash" tugmasi ko‘rsatiladi.
+Hisoblash Jarayoni:
+Foydalanuvchi o‘tkazib yuborilgan yillar sonini kiritadi (masalan, 3 yil = 365 × 3 = 1095 har bir namoz turi uchun).
+Muayyan namoz turlari uchun qo‘lda kiritish imkoniyati (masalan, Bomdod uchun 1200 ta).
+Barcha namoz turlari ro‘yxati va ularning qazo sonlari ko‘rsatiladi, sonni bosib yangi son kiritish mumkin.
+Namoz Vaqtlari ("Namoz Vaqtlari" Tugmasi)
+Namoz vaqtlari ko‘rsatiladi (4-rasmda ko‘rsatilganidek).
+Namoz vaqtlari bepul API yoki Python parsing (requests kutubxonasi) orqali olinadi.
+Namoz vaqtlarini veb-saytda ko‘rish uchun tugma qo‘shiladi: https://prayer-time-tafsoft.vercel.app/.
+Tez-tez So‘raladigan Savollar (FAQ)
+Admin panel orqali savollar qo‘shiladi.
+Savollar inline switch query orqali ko‘rsatiladi (3-rasmda ko‘rsatilganidek).
+Savol bosilganda savol va javob (matn yoki video) ko‘rinadi.
+Admin Panel Funksiyalari
+Statistika: Kunlik, haftalik, oylik foydalanuvchilar soni.
+Xabar Yuborish: Barcha foydalanuvchilarga xabar yuborish.
+Kanal Boshqaruvi: Majburiy a’zolik uchun Telegram kanallarini ulash/o‘chirish, ulangan kanallar ro‘yxati.
+Admin Boshqaruvi: Admin qo‘shish va o‘chirish.
+Texnik Talablar
+
+Dasturlash Tili: Python (Aiogram framework).
+Ma'lumotlar Bazasi: SQLite3 (foydalanuvchi ma'lumotlari va qazo hisobi uchun).
+Namoz Vaqtlari: Bepul API yoki Python parsing (requests) orqali.
+Veb-ko‘rinish: Namoz vaqtlari uchun https://prayer-time-tafsoft.vercel.app/ saytiga ulanish.
+UI/UX: Hujjatdagi rasmlar (1–5) asosida, Telegram bot interfeysi tugmalar va inline querylar bilan.
+Muddat: 15-iyunga qadar yakunlash.
+Yetkazib Beriladigan Natijalar
+
+Foydalanuvchi va admin funksiyalari bilan to‘liq ishlaydigan Telegram boti.
+SQLite3 ma'lumotlar bazasi sxemasi (foydalanuvchi ma'lumotlari, qazo hisobi, FAQ).
+Namoz vaqtlari uchun API yoki parsing yechimi integratsiyasi.
+Admin paneli (foydalanuvchilar, savollar, kanallar va xabarlar boshqaruvi).
+Botni sozlash, foydalanish va texnik xizmat ko‘rsatish uchun hujjat.
+Qo‘shimcha Eslatmalar
+
+Bildirishnomalar ishonchli va foydalanuvchiga qulay bo‘lishi kerak.
+Xatolik holatlari (masalan, noto‘g‘ri qazo soni kiritish) hisobga olinsin.
+Bot ko‘p foydalanuvchilar uchun kengaytirilishi sinovdan o‘tkazilsin.
+Hujjatda keltirilgan rasmlar (1–5) UI/UX uchun yo‘l-yo‘riq beradi, lekin bu yerda mavjud emas; standart Telegram bot interfeysiga amal qiling.

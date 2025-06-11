@@ -1,0 +1,3 @@
+BOT_TOKEN = '7235348439:AAHYlvbJRlu2n8NC2H3XMMIxB4fwEjoQiPc'
+ADMINS = [6848884650]  # Admin user IDs
+DATABASE = 'database/qazo.db'
