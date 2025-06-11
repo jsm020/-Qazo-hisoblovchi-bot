@@ -72,7 +72,18 @@ async def main_qazolarim_callback(call: CallbackQuery):
 
 @router.callback_query(F.data == "main_kop_beriladigan_savollar")
 async def kop_beriladigan_savollar_callback(call: CallbackQuery):
-    kb = await kop_savollar_kb()
+    savollar = await get_all_faq()
+    kb = kop_savollar_kb(savollar, page=0)
+    await call.message.edit_text(
+        "Ko'p beriladigan savollar:",
+        reply_markup=kb
+    )
+
+@router.callback_query(F.data.startswith("faq_page_"))
+async def kop_savollar_page_callback(call: CallbackQuery):
+    page = int(call.data.split("_")[-1])
+    savollar = await get_all_faq()
+    kb = kop_savollar_kb(savollar, page=page)
     await call.message.edit_text(
         "Ko'p beriladigan savollar:",
         reply_markup=kb

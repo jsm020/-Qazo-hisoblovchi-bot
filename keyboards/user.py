@@ -74,8 +74,51 @@ async def kop_savollar_kb():
     ])
     return kb
 
+def kop_savollar_kb(savollar, page=0, per_page=5):
+    kb = InlineKeyboardMarkup(inline_keyboard=[])
+    start = page * per_page
+    end = start + per_page
+    for idx, (savol_id, savol_text) in enumerate(savollar[start:end], start=1+start):
+        kb.inline_keyboard.append([
+            InlineKeyboardButton(text=f"{idx}. {savol_text}", callback_data=f"faq_{savol_id}")
+        ])
+    nav = []
+    if page > 0:
+        nav.append(InlineKeyboardButton(text="⬅️ Oldingi", callback_data=f"faq_page_{page-1}"))
+    if end < len(savollar):
+        nav.append(InlineKeyboardButton(text="Keyingi ➡️", callback_data=f"faq_page_{page+1}"))
+    if nav:
+        kb.inline_keyboard.append(nav)
+    kb.inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="faq_back")])
+    return kb
+
 def qazo_hisoblash_start_kb():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Hisoblashni boshlash", callback_data="hisoblash_boshlash")],
         [InlineKeyboardButton(text="Orqaga", callback_data="main_menu")]
     ])
+
+def kunlik_namoz_kb(status_dict=None):
+    if status_dict is None:
+        status_dict = {}
+    kb = InlineKeyboardMarkup(inline_keyboard=[])
+    for key, label in [
+        ("bomdod", "Bomdod"),
+        ("peshin", "Peshin"),
+        ("asr", "Asr"),
+        ("shom", "Shom"),
+        ("xufton", "Xufton"),
+        ("vitr", "Vitr namozi"),
+    ]:
+        status = status_dict.get(key, None)
+        oqidim = "✅ O'qidim" if status == "oqidim" else "O'qidim"
+        oqimadim = "✅ O'qiy olmadim" if status == "oqimadim" else "O'qiy olmadim"
+        kb.inline_keyboard.append([
+            InlineKeyboardButton(text=label, callback_data="none"),
+            InlineKeyboardButton(text=oqidim, callback_data=f"kunlik_{key}_oqidim"),
+            InlineKeyboardButton(text=oqimadim, callback_data=f"kunlik_{key}_oqimadim")
+        ])
+    kb.inline_keyboard.append([
+        InlineKeyboardButton(text="Saqlash", callback_data="kunlik_save")
+    ])
+    return kb

@@ -87,3 +87,9 @@ async def save_all_qazo(user_id, qazo_dict):
             )
         )
         await db.commit()
+
+async def get_all_user_ids():
+    async with aiosqlite.connect(DATABASE) as db:
+        cursor = await db.execute("SELECT telegram_id FROM users")
+        rows = await cursor.fetchall()
+        return [row[0] for row in rows]
