@@ -1,21 +1,52 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineQuery, InlineQueryResultArticle, InputTextMessageContent
-from keyboards.user import main_menu_kb,start_2_kb,qazo_nima_kb, kop_savollar_kb, qazo_hisoblash_start_kb
+from keyboards.user import main_menu_kb,start_2_kb,qazo_nima_kb, kop_savollar_kb, qazo_hisoblash_start_kb, kunlik_namoz_kb
 from keyboards.qazo import qazo_plus_kb
-from database.db import get_qazo, get_faq_answer, get_all_faq, update_qazo, save_all_qazo
+from database.db import get_qazo, get_faq_answer, get_all_faq, increment_qazo_if_missed, update_qazo, save_all_qazo, get_channels
+from datetime import datetime
 
 import aiosqlite
 from config import DATABASE
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.exceptions import TelegramBadRequest
+import logging
+logging.basicConfig(level=logging.INFO)
 
 router = Router()
 
 class QazoHisoblashState(StatesGroup):
     waiting_for_years = State()
 
+class KunlikNamozState(StatesGroup):
+    waiting_for_namoz = State()
+
+async def check_user_channels(user_id, bot):
+    channels = await get_channels()
+    not_joined = []
+    for channel in channels:
+        try:
+            member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
+            logging.info(f"Checking channel {channel} for user {user_id}: {member.status}")
+            if member.status in ("left", "kicked"):
+                not_joined.append(channel)
+        except TelegramBadRequest:
+            not_joined.append(channel)
+            
+    return not_joined
+
 @router.message(F.text.in_(["/start", "/help"]))
 async def start_cmd(message: Message):
+    not_joined = await check_user_channels(message.from_user.id, message.bot)
+    if not_joined:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text=f"Kanalga aʼzo bo‘lish", url=f"https://t.me/{ch.lstrip('@')}")] for ch in not_joined
+            ]
+        )
+        await message.answer("Botdan foydalanish uchun quyidagi kanallarga aʼzo bo‘ling:", reply_markup=markup)
+        return
     async with aiosqlite.connect(DATABASE) as db:
         cursor = await db.execute("SELECT * FROM users WHERE telegram_id=?", (message.from_user.id,))
         user = await cursor.fetchone()
@@ -170,6 +201,34 @@ async def qazo_minus_handler(call: CallbackQuery):
     qazo = await get_qazo(call.from_user.id)
     await call.message.edit_reply_markup(reply_markup=qazo_plus_kb(qazo))
     await call.answer(f"{namoz.capitalize()} uchun 1 ta qazo ayrildi.")
+
+@router.callback_query(F.data.startswith("kunlik_"))
+async def kunlik_namoz_handler(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    status_dict = data.get("kunlik_status", {})
+    logging.info(status_dict)
+    parts = call.data.split("_")
+    if len(parts) == 3:
+        namoz, status = parts[1], parts[2]
+        status_dict[namoz] = status
+        await state.update_data(kunlik_status=status_dict)
+    await call.message.edit_reply_markup(reply_markup=kunlik_namoz_kb(status_dict))
+    await call.answer()
+@router.callback_query(F.data == "kun_save")
+async def kunlik_namoz_save(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    status_dict = data.get("kunlik_status", {})
+    logging.info("📤 Saqlanayotgan holat:", status_dict)
+
+    if not status_dict:
+        await call.answer("❗Avval biror namoz holatini belgilang", show_alert=True)
+        return
+
+    await increment_qazo_if_missed(call.from_user.id, status_dict)
+    
+    await call.message.edit_text("✅ Kunlik namoz holatingiz muvaffaqiyatli saqlandi!")
+    await state.clear()
+
 
 def register_user_handlers(dp):
     dp.include_router(router)

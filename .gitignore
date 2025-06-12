@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtualenv
+env/
+venv/
+ENV/
+
+# VSCode
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database
+*.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Other
+*.sqlite3

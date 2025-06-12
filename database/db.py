@@ -1,3 +1,7 @@
+
+import datetime
+
+
 import aiosqlite
 from config import DATABASE
 
@@ -30,6 +34,24 @@ async def init_db():
         )
         ''')
         await db.commit()
+
+# Statistika uchun yordamchi funksiya
+async def get_stats():
+    async with aiosqlite.connect(DATABASE) as db:
+        today = datetime.date.today()
+        week_ago = today - datetime.timedelta(days=7)
+        month_ago = today - datetime.timedelta(days=30)
+        # Kunlik
+        cursor = await db.execute("SELECT COUNT(*) FROM users WHERE DATE(joined) = ?", (today.isoformat(),))
+        daily = (await cursor.fetchone())[0]
+        # Haftalik
+        cursor = await db.execute("SELECT COUNT(*) FROM users WHERE DATE(joined) >= ?", (week_ago.isoformat(),))
+        weekly = (await cursor.fetchone())[0]
+        # Oylik
+        cursor = await db.execute("SELECT COUNT(*) FROM users WHERE DATE(joined) >= ?", (month_ago.isoformat(),))
+        monthly = (await cursor.fetchone())[0]
+        return {"daily": daily, "weekly": weekly, "monthly": monthly}
+
 
 async def get_qazo(user_id):
     async with aiosqlite.connect(DATABASE) as db:
@@ -73,6 +95,7 @@ async def create_faq_table():
         await db.commit()
 
 async def save_all_qazo(user_id, qazo_dict):
+    print("Qazo ma'lumotlar saqlandi", qazo_dict, user_id)
     async with aiosqlite.connect(DATABASE) as db:
         await db.execute(
             "UPDATE qazo SET bomdod=?, peshin=?, asr=?, shom=?, xufton=?, vitr=? WHERE user_id=?",
@@ -87,6 +110,41 @@ async def save_all_qazo(user_id, qazo_dict):
             )
         )
         await db.commit()
+
+
+# --- Kanal uchun yordamchi funksiyalar ---
+async def add_channel(channel):
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY AUTOINCREMENT, channel TEXT UNIQUE)")
+        await db.execute("INSERT OR IGNORE INTO channels (channel) VALUES (?)", (channel,))
+        await db.commit()
+
+async def get_channels():
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS channels (id INTEGER PRIMARY KEY AUTOINCREMENT, channel TEXT UNIQUE)")
+        cursor = await db.execute("SELECT channel FROM channels")
+        rows = await cursor.fetchall()
+        return [row[0] for row in rows]
+
+async def remove_channel(channel):
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("DELETE FROM channels WHERE channel=?", (channel,))
+        await db.commit()
+
+ALLOWED_NAMOZ = {"bomdod", "peshin", "asr", "shom", "xufton", "vitr"}
+
+async def increment_qazo_if_missed(user_id: int, status_dict: dict):
+    print("✅ Increment qilishdan oldingi holat:", status_dict)
+    async with aiosqlite.connect(DATABASE) as db:
+        for namoz in ALLOWED_NAMOZ:
+            status = status_dict.get(namoz)
+            print(f"⏺️ {namoz}: {status}")
+            if status == "oqimadim":
+                query = f"UPDATE qazo SET {namoz} = {namoz} + 1 WHERE user_id = ?"
+                await db.execute(query, (user_id,))
+        await db.commit()
+        print("✅ Commit qilindi")
+
 
 async def get_all_user_ids():
     async with aiosqlite.connect(DATABASE) as db:

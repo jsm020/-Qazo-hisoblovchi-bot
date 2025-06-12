@@ -31,7 +31,7 @@ def kop_beriladigan_savollar_kb():
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="Qazo nima?", callback_data="qazo_nima"),
-            InlineKeyboardButton(text="Qazo hisoblash", callback_data="qazo_hisoblash")
+            InlineKeyboardButton(text="Qazo hisoblash", callback_data="main_hisoblash")
         ],
         [
             InlineKeyboardButton(text="Menda qazolar yo'q", callback_data="main_menda_qazolar_yok")
@@ -42,7 +42,7 @@ def kop_beriladigan_savollar_kb():
 def qazo_nima_kb():
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Qazo hisoblash", callback_data="qazo_hisoblash"),
+            InlineKeyboardButton(text="Qazo hisoblash", callback_data="main_hisoblash"),
             InlineKeyboardButton(text="Menda qazolar yo'q", callback_data="main_menda_qazolar_yok")
 
         ],
@@ -112,13 +112,13 @@ def kunlik_namoz_kb(status_dict=None):
     ]:
         status = status_dict.get(key, None)
         oqidim = "✅ O'qidim" if status == "oqidim" else "O'qidim"
-        oqimadim = "✅ O'qiy olmadim" if status == "oqimadim" else "O'qiy olmadim"
+        oqimadim = "❌ O'qiy olmadim" if status == "oqimadim" else "O'qiy olmadim"
         kb.inline_keyboard.append([
             InlineKeyboardButton(text=label, callback_data="none"),
             InlineKeyboardButton(text=oqidim, callback_data=f"kunlik_{key}_oqidim"),
             InlineKeyboardButton(text=oqimadim, callback_data=f"kunlik_{key}_oqimadim")
         ])
     kb.inline_keyboard.append([
-        InlineKeyboardButton(text="Saqlash", callback_data="kunlik_save")
+        InlineKeyboardButton(text="Saqlash", callback_data="kun_save")
     ])
     return kb
