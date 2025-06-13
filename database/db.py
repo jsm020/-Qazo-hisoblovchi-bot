@@ -1,9 +1,27 @@
 
 import datetime
-
-
 import aiosqlite
-from config import DATABASE
+from config import DATABASE, ADMINS
+
+# --- Adminlar uchun yordamchi funksiyalar ---
+async def add_admin(admin_id):
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS admins (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id TEXT UNIQUE)")
+        await db.execute("INSERT OR IGNORE INTO admins (admin_id) VALUES (?)", (str(admin_id),))
+        await db.commit()
+
+async def remove_admin(admin_id):
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("DELETE FROM admins WHERE admin_id=?", (str(admin_id),))
+        await db.commit()
+
+async def get_admins():
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS admins (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id TEXT UNIQUE)")
+        cursor = await db.execute("SELECT admin_id FROM admins")
+        rows = await cursor.fetchall()
+        return [row[0] for row in rows]
+
 
 async def init_db():
     async with aiosqlite.connect(DATABASE) as db:
@@ -33,6 +51,9 @@ async def init_db():
             answer TEXT NOT NULL
         )
         ''')
+        # Bot ishga tushganda asosiy admin ID bazaga qo'shish uchun
+        await db.execute("CREATE TABLE IF NOT EXISTS admins (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id TEXT UNIQUE)")
+        await db.execute("INSERT OR IGNORE INTO admins (admin_id) VALUES (?)", (str(6848884650),))
         await db.commit()
 
 # Statistika uchun yordamchi funksiya
@@ -151,3 +172,11 @@ async def get_all_user_ids():
         cursor = await db.execute("SELECT telegram_id FROM users")
         rows = await cursor.fetchall()
         return [row[0] for row in rows]
+
+async def ensure_main_admin():
+    """Bot ishga tushganda asosiy admin ID bazaga qo'shiladi (config.ADMINS[0])."""
+    main_admin_id = ADMINS[0]
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS admins (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id TEXT UNIQUE)")
+        await db.execute("INSERT OR IGNORE INTO admins (admin_id) VALUES (?)", (str(main_admin_id),))
+        await db.commit()

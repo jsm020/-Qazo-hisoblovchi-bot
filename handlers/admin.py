@@ -1,4 +1,4 @@
-from database.db import get_stats, add_channel, get_channels, remove_channel
+from database.db import get_stats, add_channel, get_channels, remove_channel, add_admin, remove_admin, get_admins, ensure_main_admin
 
 from aiogram import Router, F
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
@@ -19,7 +19,7 @@ def format_stats(stats):
     )
 @router.message(F.text.in_(["📊 Statistika", "/stat", "/statistika"]))
 async def stats_handler(message: Message):
-    if message.from_user.id not in ADMINS:
+    if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
         return
     stats = await get_stats()
@@ -37,13 +37,17 @@ class ChannelState(StatesGroup):
     waiting_for_channel = State()
     waiting_for_remove_channel = State()
 
+class AdminState(StatesGroup):
+    waiting_for_admin = State()
+    waiting_for_remove_admin = State()
+
 @router.message(F.text == "/admin")
 async def admin_panel(message: Message):
     await message.answer("Admin panel")
 
 @router.message(F.text == "/addfaq")
 async def add_faq_start(message: Message, state: FSMContext):
-    if message.from_user.id not in ADMINS:
+    if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar savol qo'sha oladi.")
         return
     await message.answer("Yangi savol matnini yuboring:")
@@ -66,7 +70,7 @@ async def add_faq_answer(message: Message, state: FSMContext):
 
 @router.message(F.text == "/send_message")
 async def broadcast_start(message: Message, state: FSMContext):
-    if message.from_user.id not in ADMINS:
+    if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
         return
     await message.answer("Yuboriladigan xabarni (matn, rasm, audio, video, fayl va h.k.) yuboring:")
@@ -137,7 +141,7 @@ async def broadcast_confirm(message: Message, state: FSMContext):
 
 @router.message(F.text == "➕ Kanal ulash")
 async def add_channel_handler(message: Message, state: FSMContext):
-    if message.from_user.id not in ADMINS:
+    if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
         return
     await message.answer("Kanal username yoki ID sini kiriting:")
@@ -151,7 +155,7 @@ async def process_add_channel(message: Message, state: FSMContext):
 
 @router.message(F.text == "📋 Ulangan kanallar")
 async def list_channels_handler(message: Message):
-    if message.from_user.id not in ADMINS:
+    if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
         return
     channels = await get_channels()
@@ -162,7 +166,7 @@ async def list_channels_handler(message: Message):
 
 @router.message(F.text == "❌ Kanal uzish")
 async def remove_channel_handler(message: Message, state: FSMContext):
-    if message.from_user.id not in ADMINS:
+    if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
         return
     await message.answer("Uziladigan kanal username yoki ID sini kiriting:")
@@ -174,6 +178,49 @@ async def process_remove_channel(message: Message, state: FSMContext):
     await message.answer("Kanal uzildi.")
     await state.clear()
 
+@router.message(F.text == "➕ Admin qo'shish")
+async def add_admin_handler(message: Message, state: FSMContext):
+    if not await is_admin(message.from_user.id):
+        await message.answer("Faqat adminlar uchun.")
+        return
+    await message.answer("Adminning Telegram ID sini kiriting:")
+    await state.set_state(AdminState.waiting_for_admin)
+
+@router.message(AdminState.waiting_for_admin)
+async def process_add_admin(message: Message, state: FSMContext):
+    await add_admin(message.text)
+    await message.answer("Admin qo'shildi.")
+    await state.clear()
+
+@router.message(F.text == "❌ Admin o'chirish")
+async def remove_admin_handler(message: Message, state: FSMContext):
+    if not await is_admin(message.from_user.id):
+        await message.answer("Faqat adminlar uchun.")
+        return
+    await message.answer("O'chiriladigan admin Telegram ID sini kiriting:")
+    await state.set_state(AdminState.waiting_for_remove_admin)
+
+@router.message(AdminState.waiting_for_remove_admin)
+async def process_remove_admin(message: Message, state: FSMContext):
+    await remove_admin(message.text)
+    await message.answer("Admin o'chirildi.")
+    await state.clear()
+
+@router.message(F.text == "📋 Adminlar ro'yxati")
+async def list_admins_handler(message: Message):
+    if not await is_admin(message.from_user.id):
+        await message.answer("Faqat adminlar uchun.")
+        return
+    admins = await get_admins()
+    if not admins:
+        await message.answer("Adminlar yo'q.")
+    else:
+        await message.answer("Adminlar:\n" + "\n".join(admins))
+
+async def is_admin(user_id):
+    admins = await get_admins()
+    return str(user_id) in admins
+
 def register_admin_handlers(dp):
     dp.include_router(router)
 
@@ -181,4 +228,6 @@ def register_admin_handlers(dp):
 # Bot ishga tushganda jadval yaratilishi uchun
 @router.startup()
 async def on_startup():
+    await ensure_main_admin()
     await create_faq_table()
+

@@ -11,6 +11,8 @@ from database.db import get_all_user_ids
 from keyboards.user import kunlik_namoz_kb
 from datetime import datetime
 import pytz
+from database.db import ensure_main_admin
+import asyncio
 
 logging.basicConfig(
     level=logging.INFO,
@@ -51,6 +53,7 @@ async def main():
         logging.info(f"Bot muvaffaqiyatli ishga tushdi: @{bot_info.username}")
         dp = Dispatcher(storage=MemoryStorage())
         from handlers import register_handlers
+        await ensure_main_admin()
         register_handlers(dp)
         scheduler = setup_scheduler(bot)
         try:
