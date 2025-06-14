@@ -1,3 +1,5 @@
-aiogram==2.25.2
+aiogram
 aiosqlite
 python-dotenv
+pytz
+apscheduler
