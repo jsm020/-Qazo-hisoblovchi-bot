@@ -151,7 +151,7 @@ async def hisoblash_years_handler(message: Message, state: FSMContext):
     # 1 yil = 365 kun, har bir namoz uchun
     for namoz in ["bomdod", "peshin", "asr", "shom", "xufton", "vitr"]:
         await update_qazo(message.from_user.id, namoz, years * 365)
-    await message.answer(f"{years} yil uchun barcha namozlarga qazo qo‘shildi!")
+    await message.answer(f"{years} yil uchun barcha namozlarga qazo qo‘shildi!",)
     await state.clear()
 
 @router.callback_query(F.data == "save_qazo")
@@ -162,7 +162,7 @@ async def save_qazo_handler(call: CallbackQuery, state: FSMContext):
         await call.message.answer("Qazo ma'lumotlari topilmadi.")
         return
     await save_all_qazo(call.from_user.id, qazo_dict)
-    await call.message.edit_text("Qazo namozlaringiz muvaffaqiyatli saqlandi!")
+    await call.message.edit_text("Qazo namozlaringiz muvaffaqiyatli saqlandi!",reply_markup=main_menu_kb())
     await state.clear()
 
 @router.callback_query(F.data.startswith("qazo_plus_"))
@@ -215,7 +215,7 @@ async def kunlik_namoz_save(call: CallbackQuery, state: FSMContext):
             status_dict[key] = "oqimadim"
 
     await increment_qazo_if_missed(call.from_user.id, status_dict)
-    await call.message.edit_text("✅ Kunlik namoz holatingiz muvaffaqiyatli saqlandi!")
+    await call.message.edit_text("✅ Kunlik namoz holatingiz muvaffaqiyatli saqlandi!",reply_markup=main_menu_kb())
     await state.clear()
 
 @router.callback_query(F.data == "main_menu")
