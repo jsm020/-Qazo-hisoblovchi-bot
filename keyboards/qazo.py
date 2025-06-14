@@ -17,7 +17,7 @@ def qazo_plus_kb(qazo_dict):
             InlineKeyboardButton(text="+", callback_data=f"qazo_plus_{key}")
         ])
     kb.inline_keyboard.append([
-        InlineKeyboardButton(text="Orqaga", callback_data="qazo_back")
+        InlineKeyboardButton(text="Orqaga", callback_data="main_menu")
     ])
     return kb
 
