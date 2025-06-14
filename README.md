@@ -4,18 +4,30 @@ Telegram uchun qazo namoz hisoblovchi va foydalanuvchilarni boshqaruvchi bot.
 
 ## O‘rnatish va ishga tushirish
 
-1. **Klonlash va kutubxonalarni o‘rnatish:**
-   ```bash
-   git clone <repo-url>
-   cd -Qazo-hisoblovchi-bot
-   pip install -r requirements.txt
-   ```
-2. **.env faylini sozlash:**
-   - `.env.example` ni nusxa olib `.env` deb nomlang va o‘z ma’lumotlaringizni kiriting.
+### 1. Oddiy ishga tushirish (Python muhitida)
 
-3. **Botni ishga tushirish:**
+```bash
+git clone <repo-url>
+cd -Qazo-hisoblovchi-bot
+pip install -r requirements.txt
+```
+
+.env faylini .env.example asosida to‘ldiring va:
+
+```bash
+python bot.py
+```
+
+### 2. Docker yordamida ishga tushirish
+
+1. .env faylini to‘ldiring (token, admin va h.k.).
+2. Docker image build qiling:
    ```bash
-   python bot.py
+   docker build -t qazo-bot .
+   ```
+3. Botni ishga tushiring:
+   ```bash
+   docker run --env-file .env qazo-bot
    ```
 
 ## Oddiy foydalanuvchi uchun komandalar va funksiyalar
@@ -58,6 +70,7 @@ Faqat adminlar uchun (bazadan olinadi):
 - APScheduler
 - SQLite (default)
 - python-dotenv
+- Docker
 
 ## Foydalanish bo‘yicha eslatmalar
 - Botni to‘g‘ri ishlatish uchun .env faylini to‘ldiring va botni Telegram kanal(lar)ga admin qilib qo‘shing.
