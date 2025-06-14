@@ -191,20 +191,30 @@ async def kunlik_namoz_handler(call: CallbackQuery, state: FSMContext):
         namoz, status = parts[1], parts[2]
         status_dict[namoz] = status
         await state.update_data(kunlik_status=status_dict)
-    await call.message.edit_reply_markup(reply_markup=kunlik_namoz_kb(status_dict))
-    await call.answer()
+    kb = kunlik_namoz_kb(status_dict)
+    try:
+        await call.message.edit_reply_markup(reply_markup=kb)
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            await call.answer("Bu holat allaqachon tanlangan.", show_alert=False)
+        else:
+            raise
+    else:
+        await call.answer()
 @router.callback_query(F.data == "kun_save")
 async def kunlik_namoz_save(call: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     status_dict = data.get("kunlik_status", {})
-    logging.info("📤 Saqlanayotgan holat:", status_dict)
+    logging.info("📤 Saqlanayotgan holat: %s", status_dict)
 
     if not status_dict:
         await call.answer("❗Avval biror namoz holatini belgilang", show_alert=True)
         return
+    for key in ["bomdod", "peshin", "asr", "shom", "xufton", "vitr"]:
+        if status_dict.get(key) is None:
+            status_dict[key] = "oqimadim"
 
     await increment_qazo_if_missed(call.from_user.id, status_dict)
-    
     await call.message.edit_text("✅ Kunlik namoz holatingiz muvaffaqiyatli saqlandi!")
     await state.clear()
 

@@ -98,6 +98,8 @@ def qazo_hisoblash_start_kb():
         [InlineKeyboardButton(text="Orqaga", callback_data="main_menu")]
     ])
 
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 def kunlik_namoz_kb(status_dict=None):
     if status_dict is None:
         status_dict = {}
@@ -122,6 +124,6 @@ def kunlik_namoz_kb(status_dict=None):
             InlineKeyboardButton(text=btn_text, callback_data=f"kunlik_{key}_{next_status}")
         ])
     kb.inline_keyboard.append([
-        InlineKeyboardButton(text="Saqlash", callback_data="kunlik_save")
+        InlineKeyboardButton(text="Saqlash", callback_data="kun_save")
     ])
     return kb
