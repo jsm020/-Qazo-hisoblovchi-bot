@@ -1,10 +1,10 @@
-
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.pyc
+config.cpython-*.pyc
 
 # Virtualenv
 env/

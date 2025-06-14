@@ -1,11 +1,13 @@
 from database.db import get_stats, add_channel, get_channels, remove_channel, add_admin, remove_admin, get_admins, ensure_main_admin
+from database.db import add_faq, create_faq_table, get_all_user_ids
+from database.db import add_notify_time, remove_notify_time, get_notify_times
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from database.db import add_faq, create_faq_table, get_all_user_ids
 from config import ADMINS
+import sys
 
 router = Router()
 
@@ -17,7 +19,7 @@ def format_stats(stats):
         f"📅 <b>Haftalik:</b> {stats['weekly']}\n"
         f"🗓️ <b>Oylik:</b> {stats['monthly']}"
     )
-@router.message(F.text.in_(["📊 Statistika", "/stat", "/statistika"]))
+@router.message(F.text.in_(["stat","/stat"]))
 async def stats_handler(message: Message):
     if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
@@ -41,11 +43,15 @@ class AdminState(StatesGroup):
     waiting_for_admin = State()
     waiting_for_remove_admin = State()
 
+class NotifyTimeState(StatesGroup):
+    waiting_for_time = State()
+    waiting_for_remove_time = State()
+
 @router.message(F.text == "/admin")
 async def admin_panel(message: Message):
     await message.answer("Admin panel")
 
-@router.message(F.text == "/addfaq")
+@router.message(F.text.in_(["/addfaq", "addfaq"]))
 async def add_faq_start(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar savol qo'sha oladi.")
@@ -68,7 +74,7 @@ async def add_faq_answer(message: Message, state: FSMContext):
     await message.answer("Savol va javob muvaffaqiyatli qo'shildi!")
     await state.clear()
 
-@router.message(F.text == "/send_message")
+@router.message(F.text.in_(["/send_message", "send_message"]))
 async def broadcast_start(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
@@ -139,7 +145,7 @@ async def broadcast_confirm(message: Message, state: FSMContext):
         )
         await message.answer("Iltimos, '✅ Yuborish' yoki '❌ Bekor qilish' tugmasini bosing.", reply_markup=markup)
 
-@router.message(F.text == "➕ Kanal ulash")
+@router.message(F.text.in_(["/addchannel", "addchannel"]))
 async def add_channel_handler(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
@@ -153,7 +159,7 @@ async def process_add_channel(message: Message, state: FSMContext):
     await message.answer("Kanal ulandi.")
     await state.clear()
 
-@router.message(F.text == "📋 Ulangan kanallar")
+@router.message(F.text.in_(["/channels", "channels"]))
 async def list_channels_handler(message: Message):
     if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
@@ -164,7 +170,7 @@ async def list_channels_handler(message: Message):
     else:
         await message.answer("Ulangan kanallar:\n" + "\n".join(channels))
 
-@router.message(F.text == "❌ Kanal uzish")
+@router.message(F.text.in_(["/removechannel", "removechannel"]))
 async def remove_channel_handler(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
@@ -178,7 +184,7 @@ async def process_remove_channel(message: Message, state: FSMContext):
     await message.answer("Kanal uzildi.")
     await state.clear()
 
-@router.message(F.text == "➕ Admin qo'shish")
+@router.message(F.text.in_(["/addadmin", "addadmin"]))
 async def add_admin_handler(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
@@ -192,7 +198,7 @@ async def process_add_admin(message: Message, state: FSMContext):
     await message.answer("Admin qo'shildi.")
     await state.clear()
 
-@router.message(F.text == "❌ Admin o'chirish")
+@router.message(F.text.in_(["/removeadmin", "removeadmin"]))
 async def remove_admin_handler(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
@@ -206,7 +212,7 @@ async def process_remove_admin(message: Message, state: FSMContext):
     await message.answer("Admin o'chirildi.")
     await state.clear()
 
-@router.message(F.text == "📋 Adminlar ro'yxati")
+@router.message(F.text.in_(["/admins", "admins"]))
 async def list_admins_handler(message: Message):
     if not await is_admin(message.from_user.id):
         await message.answer("Faqat adminlar uchun.")
@@ -216,6 +222,66 @@ async def list_admins_handler(message: Message):
         await message.answer("Adminlar yo'q.")
     else:
         await message.answer("Adminlar:\n" + "\n".join(admins))
+
+@router.message(F.text.in_(["/addtime", "➕ Vaqt qo'shish"]))
+async def add_time_handler(message: Message, state: FSMContext):
+    if not await is_admin(message.from_user.id):
+        await message.answer("Faqat adminlar uchun.")
+        return
+    await message.answer("Yangi vaqtni HH:MM formatda kiriting (masalan, 17:04):")
+    await state.set_state(NotifyTimeState.waiting_for_time)
+
+# Fayl boshida kerakli obyektlarni import qilish
+scheduler = None
+send_daily_namoz = None
+
+def set_scheduler(sched, send_func):
+    global scheduler, send_daily_namoz
+    scheduler = sched
+    send_daily_namoz = send_func
+
+@router.message(NotifyTimeState.waiting_for_time)
+async def process_add_time(message: Message, state: FSMContext):
+    try:
+        hour, minute = map(int, message.text.strip().split(":"))
+        await add_notify_time(hour, minute)
+        # Dinamik job qo'shish
+        if scheduler and send_daily_namoz:
+            scheduler.add_job(send_daily_namoz, "cron", hour=hour, minute=minute, args=[message.bot])
+        await message.answer(f"Vaqt qo'shildi: {hour:02d}:{minute:02d}")
+    except Exception:
+        await message.answer("Noto'g'ri format. To'g'ri format: HH:MM (masalan, 17:04)")
+    await state.clear()
+
+@router.message(F.text.in_(["/removetime", "❌ Vaqt o'chirish"]))
+async def remove_time_handler(message: Message, state: FSMContext):
+    if not await is_admin(message.from_user.id):
+        await message.answer("Faqat adminlar uchun.")
+        return
+    await message.answer("O'chiriladigan vaqtni HH:MM formatda kiriting:")
+    await state.set_state(NotifyTimeState.waiting_for_remove_time)
+
+@router.message(NotifyTimeState.waiting_for_remove_time)
+async def process_remove_time(message: Message, state: FSMContext):
+    try:
+        hour, minute = map(int, message.text.strip().split(":"))
+        await remove_notify_time(hour, minute)
+        await message.answer(f"Vaqt o'chirildi: {hour:02d}:{minute:02d}")
+    except Exception:
+        await message.answer("Noto'g'ri format. To'g'ri format: HH:MM (masalan, 17:04)")
+    await state.clear()
+
+@router.message(F.text.in_(["/times", "⏰ Vaqtlar ro'yxati"]))
+async def list_times_handler(message: Message):
+    if not await is_admin(message.from_user.id):
+        await message.answer("Faqat adminlar uchun.")
+        return
+    times = await get_notify_times()
+    if not times:
+        await message.answer("Hech qanday vaqt belgilanmagan.")
+    else:
+        text = "Vaqtlar ro'yxati:\n" + "\n".join([f"{h:02d}:{m:02d}" for h, m in times])
+        await message.answer(text)
 
 async def is_admin(user_id):
     admins = await get_admins()

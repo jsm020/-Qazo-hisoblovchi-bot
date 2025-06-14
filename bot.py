@@ -7,12 +7,13 @@ from config import BOT_TOKEN
 import asyncio
 from database.db import init_db
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from database.db import get_all_user_ids
+from database.db import get_all_user_ids, get_notify_times
 from keyboards.user import kunlik_namoz_kb
 from datetime import datetime
 import pytz
 from database.db import ensure_main_admin
 import asyncio
+from handlers.admin import set_scheduler
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,19 +32,17 @@ async def send_daily_namoz(bot):
         except Exception as e:
             logging.error(f"Xabar {user_id} ga yuborishda xato: {e}")
 
-def setup_scheduler(bot):
+async def setup_scheduler(bot):
     tz = pytz.timezone("Asia/Tashkent")
     current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
     logging.info(f"Joriy vaqt (Asia/Tashkent): {current_time}")
     scheduler = AsyncIOScheduler(timezone=tz)
-    scheduler.add_job(send_daily_namoz, "cron", hour=17, minute=4, args=[bot])
-    # Test uchun: har daqiqada
-    # scheduler.add_job(send_daily_namoz, "cron", minute="*", args=[bot])
+    notify_times = await get_notify_times()
+    for hour, minute in notify_times:
+        scheduler.add_job(send_daily_namoz, "cron", hour=hour, minute=minute, args=[bot])
     logging.info("Scheduler ishga tushdi")
     scheduler.start()
     return scheduler
-
-
 
 async def main():
     try:
@@ -55,7 +54,8 @@ async def main():
         from handlers import register_handlers
         await ensure_main_admin()
         register_handlers(dp)
-        scheduler = setup_scheduler(bot)
+        scheduler = await setup_scheduler(bot)
+        set_scheduler(scheduler, send_daily_namoz)
         try:
             await dp.start_polling(bot)
         finally:

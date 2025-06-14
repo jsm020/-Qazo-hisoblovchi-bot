@@ -1,4 +1,5 @@
 
+
 import datetime
 import aiosqlite
 from config import DATABASE, ADMINS
@@ -179,4 +180,23 @@ async def ensure_main_admin():
     async with aiosqlite.connect(DATABASE) as db:
         await db.execute("CREATE TABLE IF NOT EXISTS admins (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id TEXT UNIQUE)")
         await db.execute("INSERT OR IGNORE INTO admins (admin_id) VALUES (?)", (str(main_admin_id),))
+        await db.commit()
+
+
+# --- Xabar yuborish vaqtlari uchun yordamchi funksiyalar ---
+async def get_notify_times():
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS notify_times (hour INTEGER, minute INTEGER)")
+        cursor = await db.execute("SELECT hour, minute FROM notify_times")
+        return await cursor.fetchall()
+
+async def add_notify_time(hour, minute):
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS notify_times (hour INTEGER, minute INTEGER)")
+        await db.execute("INSERT INTO notify_times (hour, minute) VALUES (?, ?)", (hour, minute))
+        await db.commit()
+
+async def remove_notify_time(hour, minute):
+    async with aiosqlite.connect(DATABASE) as db:
+        await db.execute("DELETE FROM notify_times WHERE hour=? AND minute=?", (hour, minute))
         await db.commit()

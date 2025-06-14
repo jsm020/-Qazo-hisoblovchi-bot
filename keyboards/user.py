@@ -111,14 +111,17 @@ def kunlik_namoz_kb(status_dict=None):
         ("vitr", "Vitr namozi"),
     ]:
         status = status_dict.get(key, None)
-        oqidim = "✅ O'qidim" if status == "oqidim" else "O'qidim"
-        oqimadim = "❌ O'qiy olmadim" if status == "oqimadim" else "O'qiy olmadim"
+        if status == "oqidim":
+            btn_text = "✅ O'qidim"
+            next_status = "oqimadim"
+        else:
+            btn_text = "❌ O'qiy olmadim"
+            next_status = "oqidim"
         kb.inline_keyboard.append([
             InlineKeyboardButton(text=label, callback_data="none"),
-            InlineKeyboardButton(text=oqidim, callback_data=f"kunlik_{key}_oqidim"),
-            InlineKeyboardButton(text=oqimadim, callback_data=f"kunlik_{key}_oqimadim")
+            InlineKeyboardButton(text=btn_text, callback_data=f"kunlik_{key}_{next_status}")
         ])
     kb.inline_keyboard.append([
-        InlineKeyboardButton(text="Saqlash", callback_data="kun_save")
+        InlineKeyboardButton(text="Saqlash", callback_data="kunlik_save")
     ])
     return kb
