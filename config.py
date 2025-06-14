@@ -1,3 +1,8 @@
-BOT_TOKEN = '8177097935:AAFoj_al2DES_dh7-Ejff7G2SIZbsKiMDSk'
-ADMINS = [6848884650]  # Admin user IDs
-DATABASE = 'database/qazo.db'
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+ADMINS = os.getenv('ADMINS')
+DATABASE = os.getenv('DATABASE', 'database/qazo.db')

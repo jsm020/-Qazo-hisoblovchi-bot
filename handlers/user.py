@@ -58,27 +58,6 @@ async def start_cmd(message: Message):
         else:
             await message.answer("Assalomu alaykum! 😊\n\n Yana siz bilan korishganimizdan xursandmiz. Sizga qanday yordam bera olamiz? Qazo yigimlarini tumanlardam birin tanlang", reply_markup=main_menu_kb())
 
-# @router.message(F.text == "Qazolarim")
-# async def qazolarim_handler(message: Message):
-#     qazo = await get_qazo(message.from_user.id)
-#     await message.answer("Qazo namozlaringiz:", reply_markup=qazolarim_kb(qazo))
-
-# @router.callback_query(F.data.startswith("qazo_"))
-# async def qazo_callback_handler(call: CallbackQuery):
-#     data = call.data
-#     user_id = call.from_user.id
-#     if data.startswith("qazo_inc_"):
-#         namoz = data.split("_")[-1]
-#         await update_qazo(user_id, namoz, 1)
-#     elif data.startswith("qazo_dec_"):
-#         namoz = data.split("_")[-1]
-#         await update_qazo(user_id, namoz, -1)
-#     else:
-#         await call.answer()
-#         return
-#     qazo = await get_qazo(user_id)
-#     await call.message.edit_reply_markup(reply_markup=qazolarim_kb(qazo))
-#     await call.answer()
 
 @router.callback_query(F.data == "qazo_nima")
 async def qazo_nima_callback(call: CallbackQuery):
@@ -228,6 +207,13 @@ async def kunlik_namoz_save(call: CallbackQuery, state: FSMContext):
     
     await call.message.edit_text("✅ Kunlik namoz holatingiz muvaffaqiyatli saqlandi!")
     await state.clear()
+
+@router.callback_query(F.data == "main_menu")
+async def main_menu_callback(call: CallbackQuery):
+    await call.message.edit_text(
+        "Assalomu alaykum! 😊\n\nBotimizga qaytganingizdan mamnunmiz! Quyidagi bo‘limlardan birini tanlang",
+        reply_markup=main_menu_kb()
+    )
 
 
 def register_user_handlers(dp):

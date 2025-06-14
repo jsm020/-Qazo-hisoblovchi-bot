@@ -1,18 +1,19 @@
 import logging
+import asyncio
+from datetime import datetime
+
+import pytz
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
-from config import BOT_TOKEN
-import asyncio
-from database.db import init_db
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from database.db import get_all_user_ids, get_notify_times
+
+from config import BOT_TOKEN
+from database.db import (
+    init_db, get_all_user_ids, get_notify_times, ensure_main_admin
+)
 from keyboards.user import kunlik_namoz_kb
-from datetime import datetime
-import pytz
-from database.db import ensure_main_admin
-import asyncio
 from handlers.admin import set_scheduler
 
 logging.basicConfig(
@@ -24,7 +25,10 @@ logging.basicConfig(
 async def send_daily_namoz(bot):
     user_ids = await get_all_user_ids()
     today = datetime.now(pytz.timezone("Asia/Tashkent")).strftime("%d-%m-%Y")
-    text = f"-------------\n|{today}|\n---------------\nBugun qaysi namozlarni o'qidingiz? Har biriga mos tugmani tanlang:"
+    text = (
+        f"-------------\n|{today}|\n---------------\n"
+        "Bugun qaysi namozlarni o'qidingiz? Har biriga mos tugmani tanlang:"
+    )
     for user_id in user_ids:
         try:
             await bot.send_message(user_id, text, reply_markup=kunlik_namoz_kb())
@@ -34,8 +38,7 @@ async def send_daily_namoz(bot):
 
 async def setup_scheduler(bot):
     tz = pytz.timezone("Asia/Tashkent")
-    current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-    logging.info(f"Joriy vaqt (Asia/Tashkent): {current_time}")
+    logging.info(f"Joriy vaqt (Asia/Tashkent): {datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')}")
     scheduler = AsyncIOScheduler(timezone=tz)
     notify_times = await get_notify_times()
     for hour, minute in notify_times:
@@ -45,23 +48,19 @@ async def setup_scheduler(bot):
     return scheduler
 
 async def main():
+    await init_db()
+    bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    logging.info(f"Bot muvaffaqiyatli ishga tushdi: @{(await bot.get_me()).username}")
+    dp = Dispatcher(storage=MemoryStorage())
+    from handlers import register_handlers
+    await ensure_main_admin()
+    register_handlers(dp)
+    scheduler = await setup_scheduler(bot)
+    set_scheduler(scheduler, send_daily_namoz)
     try:
-        await init_db()
-        bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-        bot_info = await bot.get_me()
-        logging.info(f"Bot muvaffaqiyatli ishga tushdi: @{bot_info.username}")
-        dp = Dispatcher(storage=MemoryStorage())
-        from handlers import register_handlers
-        await ensure_main_admin()
-        register_handlers(dp)
-        scheduler = await setup_scheduler(bot)
-        set_scheduler(scheduler, send_daily_namoz)
-        try:
-            await dp.start_polling(bot)
-        finally:
-            scheduler.shutdown()
-    except Exception as e:
-        logging.error(f"Bot ishga tushishda xato: {e}")
+        await dp.start_polling(bot)
+    finally:
+        scheduler.shutdown()
 
 if __name__ == '__main__':
     print(f"Bot ishga tushdi! Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

@@ -58,7 +58,7 @@ def kop_savollar_kb_sync():
             InlineKeyboardButton(text=f"{idx}. {savol_text}", callback_data=f"faq_{savol_id}")
         ])
     kb.inline_keyboard.append([
-        InlineKeyboardButton(text="Orqaga", callback_data="faq_back")
+        InlineKeyboardButton(text="Orqaga", callback_data="main_menu")
     ])
     return kb
 
@@ -70,7 +70,7 @@ async def kop_savollar_kb():
             InlineKeyboardButton(text=f"{idx}. {savol_text}", callback_data=f"faq_{savol_id}")
         ])
     kb.inline_keyboard.append([
-        InlineKeyboardButton(text="Orqaga", callback_data="faq_back")
+        InlineKeyboardButton(text="Orqaga", callback_data="main_menu")
     ])
     return kb
 
@@ -89,7 +89,7 @@ def kop_savollar_kb(savollar, page=0, per_page=5):
         nav.append(InlineKeyboardButton(text="Keyingi ➡️", callback_data=f"faq_page_{page+1}"))
     if nav:
         kb.inline_keyboard.append(nav)
-    kb.inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="faq_back")])
+    kb.inline_keyboard.append([InlineKeyboardButton(text="Orqaga", callback_data="main_menu")])
     return kb
 
 def qazo_hisoblash_start_kb():
